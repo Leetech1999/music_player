@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Music Player</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@100..900&family=Noto+Sans:ital,wght@0,100..900;1,100..900&family=Noto+Serif:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&family=Rubik:ital,wght@0,300..900;1,300..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Icons">
     <style>
         body, div, h2, p, img,ul,li { margin:0; padding:0; box-sizing: border-box; }
@@ -23,7 +23,7 @@
             --color-shadow:#babecc;
             --text-color:#616e7f;
             --bar-bg:#aec9f8;
-            --text-size:30px;
+            --text-size:24px;
         }
         body {
             height:100vh; background:#ededed;
@@ -49,7 +49,11 @@
         .album { height:260px; border-radius: 12px; overflow: hidden; }
         .album > img { width:100%; height:100%; object-fit: cover; object-position: center bottom;}
 
-        .info { text-align: center; font-size:calc(var(--text-size) * 0.8); margin:calc(var(--text-size) * 0.5)}
+        .info {
+            text-align: center; font-size:calc(var(--text-size) * 0.8); margin:calc(var(--text-size) * 0.5);
+            font-family: 'Rubik', 'sans-serif';
+            
+            }
         .info > .artist { font-size: calc(var(--text-size) * 0.5);}
 
         .progress { 
@@ -85,8 +89,8 @@
         }
         ul{list-style:none;}
         .play_list{
-            position:absolute; width:300px; min-height:350px; background:#090909; display: none;
-            left:30px; top:120px; color:var(--color-light); padding:20px; box-sizing: border-box;
+            position:absolute; width:300px; min-height:250px; background:#9d9d9d; display: none;
+            left:30px; top:60px; color:var(--color-light); padding:20px; box-sizing: border-box; border-radius: 15px;
         }
         .play_list.active{display: block;}
         .play_list li{
@@ -97,17 +101,32 @@
         .play_list>li strong{font-weight: normal;}
         .play_list>li span{font-size: 12px;}
 
-        #volume_ctrl{position:relative; width:100%; display:flex; justify-content:flex-end; margin-top:10px;}
-        #volume_ctrl>.volumebg{position:relative; width:8px; height:80px;}
-        #volume_ctrl>.volumebg>.volumerange{
-            width: 140px;height: 12px;transform: rotate(-90deg);transform-origin: center;
-            position: absolute;top: 80%;left: 50%;translate: -50% -50%;
+        .volume{position:relative; text-align:right;}
+        .volume>#volume_btn{cursor:pointer}
+        .volume>#volume_btn.open{color:#ff33aa;}
+        .volume>#volume_ctrl{
+            width: 30px; height: 135px; background:rgba(90,40,6,0.6); border-radius:7px;
+            position:absolute; right:0; bottom:28px;
         }
-        .volume{
-            display: flex; flex-direction: column; gap:30px; position:absolute; right: 50px; top:57%; z-index: 10;
-
+        .volume>#volume_ctrl.hidden{display: none;}
+        .volume .volumebg{
+            width:6px; height:90%; border-radius: 3px; background:rgba(255,255,255,0.4); position:absolute;
+            left:50%; top:50%; transform:translate(-50%,-50%); overflow:hidden;
         }
-        .volume>span{cursor: pointer;}
+        .volume .volumerange{
+            -webkit-appearance:none; /* html 기본 css 제거 (safari, chrome)*/ appearance:none;
+            width: 121px; position:absolute; right:1px; top:-4px; transform-origin:center right;
+            transform:rotate(270deg); background:transparent; overflow:hidden; cursor:pointer; z-index:10000;
+        }
+        .volume .volumerange:focus{outline:none;}
+        .volume .volumerange::-webkit-slider-runnable-track{
+            width:100%; height:100%; cursor: pointer; border-radius: 3px;
+        }
+        .volume .volumerange::-webkit-slider-thumb{
+            -webkit-appearance:none;/* html 기본 css 제거 (safari, chrome)*/ appearance:none;
+            width:6px; height:6px; border-radius:50%; background:#fff;
+            box-shadow:-100vw 0 0 100vw #9ebdcb;
+        }
     </style>
 </head>
 <body>
@@ -119,14 +138,11 @@
             <img src="./album/album1.jpg" alt="Alone - Color Out">
         </div>
         <div class="volume">
-            <span id="volume_btn1" class="material-icons">volume_up</span>
-            <span id="volume_btn2" class="material-icons">volume_down</span>
-            <span id="volume_btn3" class="material-icons">volume_off</span>
-            
-        </div>
-        <div id="volume_ctrl">
-            <div class="volumebg">
-                <input type="range" min="0" max="100" value="100" step="1" class="volumerange">
+            <span id="volume_btn" class="material-icons">volume_up</span>
+            <div id="volume_ctrl" class="hidden">
+                <div class="volumebg">
+                    <input type="range" min="0" max="100" value="50" step="1" class="volumerange">
+                </div>
             </div>
         </div>
         <div class="info">
@@ -169,11 +185,6 @@
         const progressBar=musicApp.querySelector('.bar');
         const prevBtn=musicApp.querySelector('#prevBtn');
         const nextBtn=musicApp.querySelector('#nextBtn');
-    
-        const volumeRange = document.querySelector('.volumerange');
-        const volumeBtn1 = document.querySelector('#volume_btn1');
-        const volumeBtn2 = document.querySelector('#volume_btn2');
-        const volumeBtn3 = document.querySelector('#volume_btn3');
     
         let list_index = 0;
         let previousVolume = 0.5;
@@ -284,55 +295,45 @@
     
         const fragment = document.createDocumentFragment();
         const listLoad=()=>{
-            musicList.forEach((music)=>{
+            musicList.forEach((music,i)=>{
                 let li = document.createElement('li');
+                li.setAttribute('data-index', i);
                 li.innerHTML = `<strong>${music.name}</strong><span>${music.artist}</span>`;
-                li.addEventListener('click',()=>{
+                li.addEventListener('click',(e)=>{
+                    console.log(e.currentTarget.dataset.index);
+                    let list_index = e.currentTarget.dataset.index;
                     const allList = listBox.querySelectorAll('ul li');
                     allList.forEach(listItem => listItem.classList.remove('on'));
                     li.classList.add('on');
+                    loadMusic(list_index);
+                    musicPlay();
                 });
                 fragment.appendChild(li);
             });
             listBox.querySelector('ul').appendChild(fragment);
         }
         listLoad();
-    
-        volumeBtn1.addEventListener('click', () => {
-            musicAudio.volume = Math.min(musicAudio.volume + 0.1, 1);
-            volumeRange.value = musicAudio.volume * 100;
-        });
 
-        volumeBtn2.addEventListener('click', () => {
-            musicAudio.volume = Math.max(musicAudio.volume - 0.1, 0);
-            volumeRange.value = musicAudio.volume * 100;
+        const volumeBtn = musicApp.querySelector('#volume_btn');
+        const volumeCtrl = musicApp.querySelector('#volume_ctrl');
+        const volumeRange = musicApp.querySelector('.volumerange');
+        musicAudio.volume = 0.5;
+        volumeBtn.addEventListener('click',(e)=>{
+            e.target.classList.toggle('open');
+            volumeCtrl.classList.toggle('hidden');
         });
-    
-        volumeBtn3.addEventListener('click', () => {
-            if (!isMuted) {
-                previousVolume = musicAudio.volume;
-                musicAudio.volume = 0;
-                volumeRange.value = 0;
-                isMuted = true;
-                volumeBtn3.textContent = 'volume_mute';
-            } else {
-                musicAudio.volume = previousVolume;
-                volumeRange.value = previousVolume * 100;
-                isMuted = false;
-                volumeBtn3.textContent = 'volume_off';
+        volumeRange.addEventListener('change',()=>{
+            let oriVol = musicAudio.volume;
+            musicAudio.volume = volumeRange.value/100;
+            let currVol = musicAudio.volume;
+            if(currVol===0){
+                volumeBtn.innerHTML = 'volume_off';
+            }else if(oriVol <= currVol){
+                volumeBtn.innerHTML = 'volume_up';
+            }else{
+                volumeBtn.innerHTML = 'volume_down';
             }
-        });
-    
-        volumeRange.addEventListener('change', () => {
-            musicAudio.volume = volumeRange.value / 100;
-            previousVolume = musicAudio.volume;
-            isMuted = previousVolume = 0;
-            if (isMuted) {
-            volumeBtn3.textContent = 'volume_mute';
-            } else {
-                volumeBtn3.textContent = 'volume_off';
-            }
-        });
+        })
         </script>
     </body>
     </html>
